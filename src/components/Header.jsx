@@ -21,7 +21,7 @@ export default function Header() {
                 </Link>
 
                 <div className="flex items-center space-x-6">
-                    <nav className="hidden sm:flex space-x-6 items-center">
+                    <nav className="flex space-x-2 items-center">
                         {user ? (
                             <>
                                 <Link to="/tasks/new" className="text-gray-900 font-medium hover:text-purple-600 transition-colors">
