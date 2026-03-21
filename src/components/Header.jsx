@@ -30,6 +30,9 @@ export default function Header() {
                                 <Link to="/tasks" className="text-gray-600 font-medium hover:text-purple-600 transition-colors">
                                     All Tasks
                                 </Link>
+                                <Link to="/notes" className="text-gray-600 font-medium hover:text-purple-600 transition-colors">
+                                    Notes
+                                </Link>
                                 <div className="relative flex items-center space-x-4">
                                     <div className="relative">
                                         <img
