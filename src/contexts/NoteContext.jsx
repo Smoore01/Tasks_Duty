@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const NoteContext = createContext();
 
@@ -7,6 +8,7 @@ export function useNotes() {
 }
 
 export function NoteProvider({ children }) {
+    const { user } = useAuth();
     const [notes, setNotes] = useState(() => {
         const savedNotes = localStorage.getItem('taskduty_notes');
         if (savedNotes) {
@@ -23,25 +25,44 @@ export function NoteProvider({ children }) {
         const note = {
             ...newNote,
             id: Date.now().toString(),
+            userId: user ? user.id : null,
             createdAt: new Date().toISOString(),
         };
         setNotes([note, ...notes]);
     };
 
     const updateNote = (id, updatedNote) => {
-        setNotes(notes.map(n => n.id === id ? { ...n, ...updatedNote, updatedAt: new Date().toISOString() } : n));
+        setNotes(notes.map(n => {
+            if (n.id === id) {
+                if (user && n.userId === user.id) {
+                    return { ...n, ...updatedNote, updatedAt: new Date().toISOString() };
+                }
+            }
+            return n;
+        }));
     };
 
     const deleteNote = (id) => {
-        setNotes(notes.filter(n => n.id !== id));
+        setNotes(notes.filter(n => {
+            if (n.id === id) {
+                return !(user && n.userId === user.id);
+            }
+            return true;
+        }));
     };
 
     const getNote = (id) => {
-        return notes.find(n => n.id === id);
+        const note = notes.find(n => n.id === id);
+        if (note && user && note.userId === user.id) {
+            return note;
+        }
+        return undefined;
     };
 
+    const userNotes = user ? notes.filter(n => n.userId === user.id) : [];
+
     return (
-        <NoteContext.Provider value={{ notes, addNote, updateNote, deleteNote, getNote }}>
+        <NoteContext.Provider value={{ notes: userNotes, addNote, updateNote, deleteNote, getNote }}>
             {children}
         </NoteContext.Provider>
     );

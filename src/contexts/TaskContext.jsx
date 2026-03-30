@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const TaskContext = createContext();
 
@@ -7,6 +8,7 @@ export function useTasks() {
 }
 
 export function TaskProvider({ children }) {
+    const { user } = useAuth();
     const [tasks, setTasks] = useState(() => {
         // Load tasks from local storage or use default tasks initially
         const savedTasks = localStorage.getItem('taskduty_tasks');
@@ -40,25 +42,44 @@ export function TaskProvider({ children }) {
         const task = {
             ...newTask,
             id: Date.now().toString(),
+            userId: user ? user.id : null,
             createdAt: new Date().toISOString(),
         };
         setTasks([task, ...tasks]); // Add to beginning
     };
 
     const updateTask = (id, updatedTask) => {
-        setTasks(tasks.map(t => t.id === id ? { ...t, ...updatedTask } : t));
+        setTasks(tasks.map(t => {
+            if (t.id === id) {
+                if (user && t.userId === user.id) {
+                    return { ...t, ...updatedTask };
+                }
+            }
+            return t;
+        }));
     };
 
     const deleteTask = (id) => {
-        setTasks(tasks.filter(t => t.id !== id));
+        setTasks(tasks.filter(t => {
+            if (t.id === id) {
+                return !(user && t.userId === user.id);
+            }
+            return true;
+        }));
     };
 
     const getTask = (id) => {
-        return tasks.find(t => t.id === id);
+        const task = tasks.find(t => t.id === id);
+        if (task && user && task.userId === user.id) {
+            return task;
+        }
+        return undefined;
     };
 
+    const userTasks = user ? tasks.filter(t => t.userId === user.id) : [];
+
     return (
-        <TaskContext.Provider value={{ tasks, addTask, updateTask, deleteTask, getTask }}>
+        <TaskContext.Provider value={{ tasks: userTasks, addTask, updateTask, deleteTask, getTask }}>
             {children}
         </TaskContext.Provider>
     );
